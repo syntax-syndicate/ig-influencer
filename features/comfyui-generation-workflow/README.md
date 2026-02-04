@@ -3,7 +3,7 @@
 > LoRA training, checkpoints, IP-Adapter FaceID, face consistency, and image quality
 
 **Status**: ✅ Working (end-to-end test passed)
-**Last updated**: 4 February 2026 (HiDream-I1 evaluation complete)
+**Last updated**: 5 February 2026 (ControlNet Tile upscaling - best quality)
 
 ---
 
@@ -17,18 +17,16 @@ Image generation is **95% working**. Body consistency and image quality are now 
 |-----------|-------|-------|
 | **Checkpoint** | `bigLove_xl1.safetensors` | Better than BigLust for skin |
 | **LoRA** | `elena_v5_biglove_native.safetensors` | Strength: **1.1** |
-| **Face consistency** | IP-Adapter FaceID v2 | Weight: 0.85 |
-| **Face reference** | `elena_face_ref.jpg` | Frontal photo |
-| **Resolution** | 1024x1024 | Square, upscaled 4x |
+| **Face consistency** | LoRA only (no IP-Adapter) | IP-Adapter distorts face |
+| **Resolution** | 1024x1024 | Base generation |
 | **Steps** | 25 | |
 | **CFG** | **4.0** | Low for SDXL = less grain |
 | **Sampler** | `dpmpp_2m_sde` + `karras` | |
-| **Post-process** | 4x-UltraSharp | Upscale to 4096x4096 |
-| **Face enhancement** | FaceDetailer (Impact Pack) | denoise 0.4 |
+| **Upscale** | ControlNet Tile | denoise 0.15, → 2048x2048 |
 
 ### File Locations (Local)
 
-- LoRA: `~/ComfyUI/models/loras/elena_v4_cloud.safetensors`
+- LoRA: `~/ComfyUI/models/loras/elena_v5_biglove_native.safetensors`
 - Checkpoint: `~/ComfyUI/models/checkpoints/bigLove_xl1.safetensors`
 - Face ref: `~/ComfyUI/input/elena_face_ref.jpg`
 - Dataset: `lora-dataset-elena-cloud/10_elena/` (35 images)
@@ -108,7 +106,8 @@ node app/scripts/runpod-connect.mjs --status
 | **Vast.ai** | Reliable RunPod alternative - RTX 4090 at $0.14/hr, actually works |
 | **Z-Image Official Model** | 12.3GB from Comfy-Org/z_image HuggingFace - WORKING (previous 7.9GB was wrong) |
 | **Elena LoRA v5 BigLove-native** | Trained ON BigLove XL, strength 1.1, 95% face consistency |
-| **LoRA + FaceDetailer + UltraSharp** | Best pipeline: generate → FaceDetailer 0.5 → 4x upscale |
+| **ControlNet Tile upscaling** | Best quality: bicubic 2x → ControlNet Tile denoise 0.15 → 2048x2048 |
+| **RealESRGAN_x4plus** | Better than UltraSharp for detail preservation |
 | **HiDream-I1 Uncensored** | NSFW works with `e-n-v-y/hidream-uncensored` (HuggingFace), skin 9/10 |
 
 ## What Doesn't Work ❌
@@ -129,6 +128,8 @@ node app/scripts/runpod-connect.mjs --status
 | **FLUX.1 [dev] Full 32B** | Même problème de peau plastique que Klein - inherent to FLUX architecture |
 | **RunPod (Jan 2026)** | Platform-wide issues - pods stuck at "RUNNING" with runtime null |
 | **HiDream-I1 Official** | Built-in NSFW censorship - generates bikinis/lingerie instead of nudity |
+| **4x-UltraSharp upscaler** | Degrades quality when zoomed - over-sharpens, creates artifacts |
+| **IP-Adapter FaceID** | Distorts face even at low weights (0.15) - abandoned |
 | **HiDream-I1 + IP-Adapter** | IP-Adapter FaceID is SDXL-only, not compatible with HiDream DiT architecture |
 
 ## Open Questions ❓
