@@ -3,7 +3,7 @@
 > LoRA training, checkpoints, IP-Adapter FaceID, face consistency, and image quality
 
 **Status**: ✅ Working (end-to-end test passed)
-**Last updated**: 31 January 2026 (Z-Image Full FIXED - official model works)
+**Last updated**: 4 February 2026 (HiDream-I1 evaluation complete)
 
 ---
 
@@ -16,7 +16,7 @@ Image generation is **95% working**. Body consistency and image quality are now 
 | Component | Value | Notes |
 |-----------|-------|-------|
 | **Checkpoint** | `bigLove_xl1.safetensors` | Better than BigLust for skin |
-| **LoRA** | `elena_v4_cloud.safetensors` | Strength: **0.7** |
+| **LoRA** | `elena_v5_biglove_native.safetensors` | Strength: **1.1** |
 | **Face consistency** | IP-Adapter FaceID v2 | Weight: 0.85 |
 | **Face reference** | `elena_face_ref.jpg` | Frontal photo |
 | **Resolution** | 1024x1024 | Square, upscaled 4x |
@@ -107,6 +107,9 @@ node app/scripts/runpod-connect.mjs --status
 | **Z-Image Full** | **AMAZING skin quality** - natural pores, freckles, film grain (34s on RTX 4090) |
 | **Vast.ai** | Reliable RunPod alternative - RTX 4090 at $0.14/hr, actually works |
 | **Z-Image Official Model** | 12.3GB from Comfy-Org/z_image HuggingFace - WORKING (previous 7.9GB was wrong) |
+| **Elena LoRA v5 BigLove-native** | Trained ON BigLove XL, strength 1.1, 95% face consistency |
+| **LoRA + FaceDetailer + UltraSharp** | Best pipeline: generate → FaceDetailer 0.5 → 4x upscale |
+| **HiDream-I1 Uncensored** | NSFW works with `e-n-v-y/hidream-uncensored` (HuggingFace), skin 9/10 |
 
 ## What Doesn't Work ❌
 
@@ -125,6 +128,8 @@ node app/scripts/runpod-connect.mjs --status
 | **FLUX.2 Klein 9B** | Rendu trop "propre", peau plastique (distilled = speed not quality) |
 | **FLUX.1 [dev] Full 32B** | Même problème de peau plastique que Klein - inherent to FLUX architecture |
 | **RunPod (Jan 2026)** | Platform-wide issues - pods stuck at "RUNNING" with runtime null |
+| **HiDream-I1 Official** | Built-in NSFW censorship - generates bikinis/lingerie instead of nudity |
+| **HiDream-I1 + IP-Adapter** | IP-Adapter FaceID is SDXL-only, not compatible with HiDream DiT architecture |
 
 ## Open Questions ❓
 
@@ -137,14 +142,18 @@ node app/scripts/runpod-connect.mjs --status
 
 | # | Task | Status | Priority | Link |
 |---|------|--------|----------|------|
-| **014** | **Elena LoRA on Comfy-Org Z-Image** | ⏸️ Training (3500 steps, ~4h) | **HIGH** | [→](./tasks/TASK-014-elena-lora-comfyorg-zimage.md) |
+| **015** | **Elena LoRA v5 for BigLove XL** | ✅ Complete | - | [→](./tasks/TASK-015-elena-lora-v5-biglove.md) |
+| 014 | Elena LoRA on Comfy-Org Z-Image | ✅ Done (v3) | - | [→](./tasks/DONE-014-elena-lora-comfyorg-zimage.md) |
 | 011 | Z-Image Elena LoRA Training (ostris) | ❌ Incompatible | - | [→](./tasks/TASK-011-zimage-elena-lora-training.md) |
 | 010 | Z-Image Face Reference Fix | ❌ Failed | - | [→](./tasks/TASK-010-zimage-face-reference-fix.md) |
 | 009 | Z-Image Skin Quality Test (Vast.ai) | 🟡 In Progress | High | [→](./tasks/TASK-009-local-comfyui-mac.md) |
 | 004 | Face refinement (85% → 95%) | 🟡 In Progress | Medium | [→](./tasks/TASK-004-qwen-face-refinement.md) |
 | 008 | Seedream 4.5 ComfyUI Integration | ❌ Blocked | Low | [→](./tasks/TASK-008-seedream-45-integration.md) |
 
-**Status**: Z-Image Full model WORKS. TASK-014 training in progress on Vast.ai pod (3500 steps, ETA ~4h from 13:24 UTC).
+**Status**: TASK-015 COMPLETE
+- ✅ `elena_v5_biglove_native.safetensors` - trained ON BigLove XL (218MB, local)
+- Best settings: LoRA 1.1, FaceDetailer 0.5, 4x-UltraSharp
+- Face is 95% consistent (but NOT original Elena - "new Elena" character)
 
 ### Backlog
 
@@ -163,6 +172,7 @@ node app/scripts/runpod-connect.mjs --status
 
 | # | Task | Completed | Link |
 |---|------|-----------|------|
+| 016 | HiDream-I1 Integration Test | 4 Feb 2026 | [→](./tasks/DONE-016-hidream-i1-integration.md) |
 | 013 | Z-Image Official Models Debug | 31 Jan 2026 | [→](./tasks/DONE-013-zimage-official-models-debug.md) |
 | 001 | Grain reduction (CFG 4.0 + dpmpp_2m_sde) | 23 Jan 2026 | [→](./tasks/DONE-001-grain-reduction.md) |
 | 005 | RunPod persistent setup | 25 Jan 2026 | [→](./tasks/DONE-005-runpod-persistent-setup.md) |

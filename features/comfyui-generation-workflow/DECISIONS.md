@@ -4,6 +4,78 @@ Chronological log of decisions made and why.
 
 ---
 
+## 2026-02-04: HiDream-I1 Evaluated — NSFW Works with Uncensored Version, No Face Consistency
+
+**Context**: Evaluated HiDream-I1 (17B params) as potential BigLove XL replacement.
+
+**Key Findings**:
+
+1. **Official HiDream-I1** (Comfy-Org) has **built-in NSFW censorship** — generates bikinis/lingerie instead of nudity
+
+2. **Uncensored HiDream-I1** (HuggingFace `e-n-v-y/hidream-uncensored`) **works for full NSFW**:
+   - Full nudity, nipples, explicit content
+   - No censorship issues
+   - Skin quality: 9/10 (excellent freckles, pores, natural tones)
+
+3. **Face consistency NOT possible** — IP-Adapter FaceID is SDXL-architecture only, incompatible with HiDream's DiT architecture
+
+**Test Results (Uncensored Model)**:
+| Test | Result |
+|------|--------|
+| NSFW Nude (explicit) | ✅ Full nudity |
+| NSFW Topless (beach) | ✅ Topless |
+| Skin Quality | 9/10 |
+| Face Consistency | ❌ Not compatible |
+
+**Decision**: Stay with BigLove XL for Elena (requires face consistency)
+
+**Reason**:
+- Elena needs consistent face across all images
+- IP-Adapter/FaceID doesn't work with HiDream DiT architecture
+- BigLove XL + Elena LoRA v5 remains the best solution
+
+**Potential use case**:
+- HiDream-I1 Uncensored could be used for generic NSFW content where no specific face is needed
+- Watch for future DiT-compatible face consistency solutions
+
+**Models tested**:
+- Official: `hidream_i1_fast_fp8.safetensors` (Comfy-Org) — censored
+- Uncensored: `hidream_i1_fast_uncensored_fp8_v0.2.safetensors` (e-n-v-y/hidream-uncensored) — works
+
+---
+
+## 2026-02-02: Retrain BigLove LoRA v5 with Face-Focused Captions
+
+**Context**: Z-Image Full + LoRA v3 gives good Elena face but weird anatomy. Z-Image Turbo has good anatomy but LoRA doesn't transfer face. Need NSFW content with both good face AND anatomy for Fanvue.
+
+**Analysis of previous BigLove v4 LoRA failure**:
+- Trigger token: `ohwx` (generic) instead of `elena` (identity)
+- Captions: Same generic caption for ALL 56 images
+- Steps: Only 1500
+- Alpha: 32 (too aggressive)
+
+**Options considered**:
+1. Accept Z-Image anatomy limitations
+2. Use Z-Image Turbo + ReActor face swap → Plastic AI look
+3. Inpainting for anatomy → Didn't work well
+4. Retrain BigLove LoRA with Z-Image v3 approach → Best option
+
+**Decision**: Train new Elena LoRA v5 for BigLove XL with:
+- Trigger: `elena` (identity-specific)
+- Captions: Per-image detailed, face-focused
+- Steps: 4000 (increased from 1500)
+- Rank/Alpha: 32/16 (not 32/32)
+- Face details in every caption: "full pouty lips, high cheekbones, angular jawline, hazel-green eyes, beauty mark"
+
+**Reason**:
+- Z-Image v3 with detailed captions worked well for face
+- BigLove XL has better NSFW anatomy than Z-Image
+- Combining both approaches should give face + anatomy
+
+**Status**: Task created (TASK-015), ready for /ralph execution
+
+---
+
 ## 2026-01-28: FLUX abandonné - Peau plastique inhérente à l'architecture
 
 **Context**: Tested FLUX.1 [dev] Full (32B) après FLUX.2 Klein 9B, espérant que le modèle complet aurait une meilleure qualité de peau.
