@@ -3,7 +3,7 @@
 > LoRA training, checkpoints, IP-Adapter FaceID, face consistency, and image quality
 
 **Status**: ✅ Working (end-to-end test passed)
-**Last updated**: 5 February 2026 (ControlNet Tile upscaling - best quality)
+**Last updated**: 6 February 2026 (ZiT + Elena LoRA training — 2026 quality NSFW with face consistency)
 
 ---
 
@@ -109,6 +109,9 @@ node app/scripts/runpod-connect.mjs --status
 | **ControlNet Tile upscaling** | Best quality: bicubic 2x → ControlNet Tile denoise 0.15 → 2048x2048 |
 | **RealESRGAN_x4plus** | Better than UltraSharp for detail preservation |
 | **HiDream-I1 Uncensored** | NSFW works with `e-n-v-y/hidream-uncensored` (HuggingFace), skin 9/10 |
+| **Chroma1-HD SFW/suggestive** | FLUX-based, excellent natural/amateur look - CFG 3.0, dpmpp_sde, beta scheduler |
+| **Z-Image Turbo + Elena LoRA** | **2026 BEST**: Natural skin with pores/grain, ~90% face consistency, NSFW works. Trained with Ostris AI Toolkit + de-distillation adapter v2 |
+| **Vast.ai H100 SXM** | 2.8x faster than 4090 for LoRA training, $1.49/hr, reliable. 4000 steps in 2h45m |
 
 ## What Doesn't Work ❌
 
@@ -131,11 +134,15 @@ node app/scripts/runpod-connect.mjs --status
 | **4x-UltraSharp upscaler** | Degrades quality when zoomed - over-sharpens, creates artifacts |
 | **IP-Adapter FaceID** | Distorts face even at low weights (0.15) - abandoned |
 | **HiDream-I1 + IP-Adapter** | IP-Adapter FaceID is SDXL-only, not compatible with HiDream DiT architecture |
+| **Existing Elena LoRAs + Chroma** | All Elena LoRAs (SDXL/Lumina2) incompatible with FLUX/Chroma architecture |
+| **Chroma1-HD explicit NSFW** | Glitches, body deformations, hands turn into blobs on explicit poses |
+| **ACE++ (Alibaba)** | Project abandoned by Alibaba, pale skin, no community support |
+| **Comfy-Org single files for training** | Fused QKV format incompatible with diffusers split Q/K/V — must use Tongyi-MAI sharded files |
 
 ## Open Questions ❓
 
-- Qwen2.5-VL pour copier le visage de référence ?
 - Face-only LoRA from cropped headshots?
+- ZiT NSFW v4.0 vs base Z-Image Turbo for explicit content?
 
 ---
 
@@ -143,6 +150,9 @@ node app/scripts/runpod-connect.mjs --status
 
 | # | Task | Status | Priority | Link |
 |---|------|--------|----------|------|
+| **019** | **ZiT + Elena LoRA Training** | 🟡 In Progress | **Critical** | [→](./tasks/TASK-019-zit-elena-lora-training.md) |
+| 018 | ACE++ Face Consistency Test | ❌ Abandoned | - | [→](./tasks/TASK-018-ace-plus-face-consistency.md) |
+| **017** | **Chroma1-HD Testing** | ✅ Done (NSFW failed) | - | [→](./tasks/TASK-017-chroma-testing.md) |
 | **015** | **Elena LoRA v5 for BigLove XL** | ✅ Complete | - | [→](./tasks/TASK-015-elena-lora-v5-biglove.md) |
 | 014 | Elena LoRA on Comfy-Org Z-Image | ✅ Done (v3) | - | [→](./tasks/DONE-014-elena-lora-comfyorg-zimage.md) |
 | 011 | Z-Image Elena LoRA Training (ostris) | ❌ Incompatible | - | [→](./tasks/TASK-011-zimage-elena-lora-training.md) |

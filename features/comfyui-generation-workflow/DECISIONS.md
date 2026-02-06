@@ -4,6 +4,102 @@ Chronological log of decisions made and why.
 
 ---
 
+## 2026-02-06: Z-Image Turbo + Elena LoRA = 2026 Production Pipeline
+
+**Context**: After testing BigLove XL (SDXL = 2024 quality), FLUX (plastic skin), HiDream (no face tools), Chroma (NSFW glitches), and ACE++ (abandoned by Alibaba), needed a 2026-quality solution with face consistency + NSFW support.
+
+**Options considered**:
+1. BigLove XL + Elena LoRA v5 → SDXL = 2024 quality, skin not realistic enough
+2. FLUX + LoRA → Plastic skin, no natural pores
+3. Chroma + LoRA → Explicit NSFW causes deformations/glitches
+4. HiDream → No face consistency tools (IP-Adapter incompatible)
+5. ACE++ (Alibaba) → Abandoned project, pale skin, dead community
+6. **Z-Image Turbo + Ostris AI Toolkit LoRA** → S3-DiT architecture, natural skin, uncensored, 8-step inference
+
+**Decision**: Z-Image Turbo + Elena LoRA trained with Ostris AI Toolkit
+
+**Reason**:
+- Z-Image Turbo has the best skin quality of any model tested (natural pores, grain, film-like)
+- Ostris AI Toolkit supports Z-Image LoRA training with de-distillation adapter v2
+- 8-step inference = fast generation
+- Native NSFW support without deformations
+- ~90% face consistency from training samples
+
+**Training Details**:
+- Trigger: `<elena>`, Rank 16, LR 1e-4, 4000 steps, batch 2
+- Dataset: 56 images with detailed captions
+- Trained on Vast.ai H100 SXM in 2h45m (~$4.10)
+- Final LoRA: 81MB (`elena_zit_lora_v1.safetensors`)
+
+**Result**: Training complete. Inference testing pending. Looks very promising from training samples.
+
+---
+
+## 2026-02-06: Vast.ai > RunPod for Training
+
+**Context**: RunPod pod went down mid-training (step ~1500/4000). Needed to restart training.
+
+**Options considered**:
+1. Wait for RunPod pod to come back → Unknown downtime, data might be lost
+2. Vast.ai RTX 4090 → Same speed, cheaper ($0.30/hr)
+3. **Vast.ai H100 SXM** → 2.8x faster, $1.49/hr, reliable
+
+**Decision**: Vast.ai H100 SXM for training, destroy after completion
+
+**Reason**: H100 80GB VRAM allows batch_size 2, 1.78-2.87s/step vs 3.5s on 4090. Total cost ~$4.10 for full training. No persistent storage needed — LoRA is 81MB, easy to download.
+
+**Result**: Training completed in 2h45m. Instance destroyed immediately. Cost-effective and reliable.
+
+---
+
+## 2026-02-06: Chroma1-HD Tested — Excellent Natural/Amateur Quality for NSFW
+
+**Context**: Tested Chroma1-HD (FLUX-based, 17.8GB) as alternative to Imagen 3 for NSFW content with natural/amateur look.
+
+**Key Findings**:
+
+1. **Chroma1-HD produces excellent natural/amateur quality**:
+   - Skin texture: natural pores, not "AI-perfect"
+   - Lighting: natural, not studio-like
+   - Overall vibe: amateur/iPhone look (what we want for Fanvue)
+   - NSFW: fully uncensored, no filters
+
+2. **Best Settings Found**:
+   - Steps: 25
+   - CFG: 3.0 (low = more natural)
+   - Sampler: dpmpp_sde
+   - Scheduler: beta
+   - VAE: ae.safetensors (FLUX VAE)
+   - CLIP: t5xxl_fp8 with type "chroma"
+
+3. **LoRA Compatibility**: NONE of existing Elena LoRAs work
+   - elena_v5_biglove = SDXL architecture
+   - elena_zimage_v3 = Lumina2 architecture
+   - Chroma = FLUX architecture (different)
+
+**Test Results**:
+| Test | Result |
+|------|--------|
+| SFW Selfie | ✅ Natural iPhone look |
+| NSFW Nude | ✅ Excellent, natural body |
+| Skin Quality | 9/10 (natural, not AI-perfect) |
+| Face Consistency | ❌ No Elena LoRA available |
+
+**Decision**: Chroma1-HD is excellent for NSFW amateur content, but needs FLUX-trained Elena LoRA for face consistency
+
+**Next Steps**:
+- Consider training Elena LoRA specifically for FLUX/Chroma
+- Use Chroma for generic NSFW content (no specific face needed)
+- Keep BigLove XL + elena_v5 for Elena-specific content
+
+**RunPod Setup**:
+- Deleted flux1-dev-fp8 (17GB) to make space
+- Downloaded Chroma1-HD.safetensors (17GB)
+- Downloaded ae.safetensors VAE (335MB)
+- Works with existing t5xxl_fp8 encoder
+
+---
+
 ## 2026-02-04: HiDream-I1 Evaluated — NSFW Works with Uncensored Version, No Face Consistency
 
 **Context**: Evaluated HiDream-I1 (17B params) as potential BigLove XL replacement.
