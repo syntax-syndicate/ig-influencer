@@ -17,9 +17,12 @@ Test Z-Image Full model for realistic skin quality. Originally planned for local
 - [x] Z-Image Full model downloaded (12.3GB)
 - [x] Basic test generation works on Vast.ai RTX 4090
 - [x] Skin quality assessment: **EXCELLENT** - natural texture, pores, freckles
-- [ ] Elena face reference generation (IP-Adapter FaceID)
-- [ ] NSFW generation test
-- [ ] Document final comparison with BigLove XL
+- [x] **Vast.ai API script** — Created `app/scripts/vastai-connect.mjs` to manage instances
+- [x] **Upload local models** — Downloaded models via HuggingFace (faster than local upload)
+- [x] **NSFW generation test** — Z-Image Full generates explicit content without filters ✅
+- [ ] **Elena face reference test** — ❌ BLOCKED: Z-Image doesn't support IP-Adapter FaceID (architecture incompatible)
+- [ ] **Workflow JSON** — Not possible with Z-Image native image conditioning
+- [ ] **Test output** — N/A due to face ref blocker
 
 ---
 
@@ -164,12 +167,15 @@ python main.py --listen 0.0.0.0 --port 8188
 
 **Partial Success:**
 - Z-Image Full produces **excellent natural skin** (better than FLUX)
-- Vast.ai is a reliable RunPod alternative ($0.14/hr RTX 4090)
-- Face reference test pending (IP-Adapter setup incomplete)
+- Z-Image Full is **fully uncensored** — generates explicit NSFW without filters
+- Vast.ai is a reliable RunPod alternative ($0.14-0.16/hr RTX 3090/4090)
+- **Face reference NOT possible** with Z-Image (architecture incompatible with IP-Adapter)
 
-**Test Image:**
-- `z_image_skin_test.png` saved to project root
-- Shows natural skin texture, pores, freckles - NOT plastic
+**Test Images:**
+- `z_image_skin_test.png` — Natural skin texture, pores, freckles
+- `zimage_full_nsfw_breasts.png` — Explicit breasts ✅
+- `zimage_full_nsfw_pussy.png` — Explicit pussy ✅
+- `zimage_full_nsfw_shower.png` — Full frontal shower ✅
 
 ---
 
@@ -203,3 +209,30 @@ python main.py --listen 0.0.0.0 --port 8188
 **Files Modified**:
 - `z_image_skin_test.png` — Test output (amazing skin quality)
 - `docs/perplexity-searches/` — RunPod issues research, alternatives research
+
+### 2026-01-30 — Ralph Session
+**Summary**: NSFW tests successful, face reference BLOCKED due to architecture incompatibility.
+
+**NSFW Tests (Z-Image Full) — ALL PASSED:**
+1. `zimage_full_nsfw_breasts.png` — Topless, breasts visible ✅
+2. `zimage_full_nsfw_pussy.png` — Full nude, intimate visible ✅
+3. `zimage_full_nsfw_shower.png` — Shower scene, full frontal ✅
+
+**Face Reference Tests — BLOCKED:**
+- Tried `TextEncodeZImageOmni` with CLIP Vision + image1 input
+- Error: `RuntimeError: shape '[1, 14, 14, 1280]' is invalid for input of size 328960`
+- Tried without CLIP Vision (VAE only)
+- Error: `RuntimeError: shape '[1, 16, 71, 2, 57, 2]' is invalid for input of size 263120`
+- **Root cause**: Z-Image uses Lumina/S3-DiT architecture, not SDXL. IP-Adapter FaceID is SDXL-only.
+
+**Decision**: Z-Image Full is excellent for NSFW skin quality but cannot do face reference. Need separate pipeline:
+- **Quality NSFW**: Z-Image Full (uncensored, realistic skin)
+- **Face consistency**: BigLove XL + IP-Adapter FaceID (SDXL-compatible)
+
+**Files Modified**:
+- `zimage_full_nsfw_breasts.png`
+- `zimage_full_nsfw_pussy.png`
+- `zimage_full_nsfw_shower.png`
+- `app/scripts/vastai-connect.mjs`
+- `app/scripts/vastai-search-eu.mjs`
+- `app/scripts/vastai-create-eu.mjs`

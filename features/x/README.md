@@ -59,7 +59,8 @@ X teasers (3-4/day) → Profile → Bio link → Fanvue → Venice AI chat → P
 |------|-------|--------|------|
 | TASK-003 | X Auto-Posting (Content Brain) | 🔵 Todo | 2026-01-29 |
 | TASK-004 | Temporary Cloudinary Posting | ⏸️ Paused | 2026-01-30 |
-
+| TASK-005 | Auto-Like Engagement Bot | 🔵 Todo (Investigated) | 2026-01-31 |
+| TASK-006 | Viral Reply Bot | 🔵 Todo (Investigated) | 2026-01-31 |
 ## Done Tasks (not yet renamed)
 
 | Task | Title | Status | Date |
@@ -73,6 +74,7 @@ X teasers (3-4/day) → Profile → Bio link → Fanvue → Venice AI chat → P
 | Task | Title | Status | Date |
 |------|-------|--------|------|
 | DONE-002 | X API OAuth 2.0 Connection | ✅ Complete | 2026-01-29 |
+| DONE-007 | Elena Content Pipeline (Generate → Curate → Post) | ✅ Complete | 2026-02-08 |
 
 ---
 
@@ -115,6 +117,8 @@ X teasers (3-4/day) → Profile → Bio link → Fanvue → Venice AI chat → P
 - Token refresh for long-term use
 - **Image posting via v2 API** (OAuth 2.0 + `media.write` scope)
 - **33 Cloudinary images ready to post** (with captions)
+- **Elena Content Pipeline** (generate → curate → prepare → auto-post)
+- **GitHub Actions auto-posting** (4x/day from Supabase queue)
 
 ## What Doesn't Work ❌
 
@@ -139,6 +143,14 @@ node app/scripts/x-oauth2-test.mjs --refresh
 node app/scripts/x-post-cloudinary.mjs --list          # List all 33 images
 node app/scripts/x-post-cloudinary.mjs --id 2 --dry    # Preview post
 node app/scripts/x-post-cloudinary.mjs --id 2          # Post (text-only until media.write enabled)
+
+# Content Pipeline (DONE-007)
+node app/scripts/elena-generate-batch.mjs --count 5 --dry    # Preview prompts
+node app/scripts/elena-generate-batch.mjs --count 10         # Generate batch on Vast.ai
+node app/scripts/elena-prepare-posts.mjs --dry               # Preview captions
+node app/scripts/elena-prepare-posts.mjs                     # Upload + queue
+node app/scripts/x-post-from-queue.mjs --status              # Check queue
+node app/scripts/x-post-from-queue.mjs --dry                 # Preview next post
 ```
 
 ---

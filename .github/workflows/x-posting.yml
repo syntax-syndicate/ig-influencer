@@ -1,0 +1,61 @@
+name: X Auto-Post from Queue
+
+# ═══════════════════════════════════════════════════════════════════
+# 🐦 Posts from Supabase content_queue to X/Twitter 4x/day
+# Queue is filled by: elena-prepare-posts.mjs (manual step)
+# ═══════════════════════════════════════════════════════════════════
+
+on:
+  schedule:
+    # CET times → UTC (CET = UTC+1 in winter)
+    - cron: '0 8 * * *'    # 9h CET  — Morning teaser
+    - cron: '0 13 * * *'   # 14h CET — Afternoon engagement
+    - cron: '0 18 * * *'   # 19h CET — Evening spicy
+    - cron: '0 21 * * *'   # 22h CET — Night post
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview only (no tweet posted)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  post-to-x:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./app
+        run: npm install twitter-api-v2 @supabase/supabase-js dotenv
+
+      - name: Post next image from queue
+        working-directory: ./app
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          X_OAUTH2_ACCESS_TOKEN: ${{ secrets.X_OAUTH2_ACCESS_TOKEN }}
+          X_OAUTH2_REFRESH_TOKEN: ${{ secrets.X_OAUTH2_REFRESH_TOKEN }}
+          X_USERNAME: ElenaVisco46970
+        run: |
+          echo "🐦 X Auto-Post from Queue"
+          echo "📅 $(date)"
+
+          CMD="node scripts/x-post-from-queue.mjs"
+
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            CMD="$CMD --dry"
+            echo "⚠️ Dry run mode"
+          fi
+
+          $CMD

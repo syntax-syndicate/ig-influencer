@@ -137,6 +137,13 @@ Similar NSFW/model creators to engage with:
 
 ---
 
+## Related Tasks
+
+- [TASK-005: Auto-Like Engagement Bot](../tasks/TASK-005-auto-like-engagement-bot.md) - Automated liking of low-engagement comments (investigation complete)
+- [TASK-006: Viral Reply Bot](../tasks/TASK-006-viral-reply-bot.md) - Early bird replies on viral posts with witty text or sexy photos (investigation complete)
+
+---
+
 ## Next Steps
 
 1. [ ] Create engagement routine checklist

@@ -111,6 +111,67 @@ export async function generateWithNanaBanana(
 }
 
 /**
+ * Generate image using Seedream 4.5 (ByteDance)
+ * Excellent for portraits, realistic skin, lighting
+ * Cost: ~$0.04/image
+ * Supports up to 14 reference images
+ */
+export async function generateWithSeedream(
+  template: ContentTemplate,
+  referenceImages?: string[]
+): Promise<GenerateImageResult> {
+  try {
+    const client = getClient();
+    const prompt = buildPrompt(template);
+
+    console.log('[Replicate] Generating with Seedream 4.5...');
+    console.log('[Replicate] Reference images:', referenceImages?.length || 0);
+    console.log('[Replicate] Prompt:', prompt.slice(0, 200) + '...');
+
+    const output = await client.run("bytedance/seedream-4.5", {
+      input: {
+        prompt,
+        image_input: referenceImages || [],
+        aspect_ratio: "3:4", // Closest to 4:5 Instagram portrait
+        size: "2K",
+      }
+    });
+
+    console.log('[Replicate] Seedream 4.5 raw output type:', typeof output);
+
+    // Same URL extraction logic as Nano Banana
+    let imageUrl: string | undefined;
+    if (typeof output === 'string') {
+      imageUrl = output;
+    } else if (Array.isArray(output) && output.length > 0) {
+      const first = output[0];
+      imageUrl = typeof first === 'string' ? first : String(first);
+    }
+
+    if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+      const outputStr = String(output);
+      const urlMatch = outputStr.match(/https?:\/\/[^\s"'\]]+/);
+      if (urlMatch) {
+        imageUrl = urlMatch[0];
+      }
+    }
+
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      return { success: false, error: `No image URL from Seedream 4.5. Output: ${String(output).slice(0, 200)}` };
+    }
+
+    console.log('[Replicate] Seedream 4.5 image generated:', imageUrl);
+    return { success: true, imageUrl };
+  } catch (error) {
+    console.error('[Replicate] Seedream 4.5 error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
  * Check API status
  */
 export async function checkApiStatus(): Promise<{ ok: boolean; error?: string }> {

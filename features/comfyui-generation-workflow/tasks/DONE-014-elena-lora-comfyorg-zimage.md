@@ -1,6 +1,6 @@
 # TASK-014: Train Elena LoRA on Official Comfy-Org Z-Image Full
 
-**Status**: ⏸️ PAUSED (training running on pod)
+**Status**: ✅ Done
 **Created**: 2026-01-31
 **Feature**: [ComfyUI Generation Workflow](../README.md)
 
@@ -34,11 +34,11 @@ Train a new Elena LoRA specifically for the **official Comfy-Org Z-Image Full mo
 - [x] Upload 56 Elena training images to pod (already prepared in `lora-dataset-elena-zimage/`)
 - [x] Configure training: bf16, rank 32-48, trigger token "elena"
 - [x] Start training on Vast.ai pod (RTX 3090)
-- [ ] Monitor training loss (should decrease, no NaN) — IN PROGRESS (loss decreasing: 0.37→0.30)
-- [ ] Download trained LoRA when complete
-- [ ] Test LoRA with Z-Image Full workflow in ComfyUI
-- [ ] Verify Elena face is recognizable in generated images
-- [ ] Save final LoRA as `elena_zimage_v3_comfyorg.safetensors`
+- [x] Monitor training loss (should decrease, no NaN) — Loss: 0.37→0.30, healthy training
+- [x] Download trained LoRA when complete — 134MB downloaded to local
+- [x] Test LoRA with Z-Image Full workflow in ComfyUI — 3 test scenes generated
+- [x] Verify Elena face is recognizable in generated images — ✅ w1.0 + descriptive prompt = strong identity
+- [x] Save final LoRA as `elena_zimage_v3_comfyorg.safetensors` — saved to ~/ComfyUI/models/loras/
 
 ---
 
@@ -172,24 +172,55 @@ ssh -p 27228 root@ssh3.vast.ai
 - **ETA**: ~4 hours total from start
 - **Checkpoints**: Will save at 500, 1000, 1500, 2000, 2500, 3000, 3500
 
-## Resume Instructions
+### 2026-02-01 - TRAINING COMPLETE + TESTED
+- **Training finished**: 3500 steps, 7 epochs, all checkpoints saved
+- **Downloaded**: `elena_zimage_v3_comfyorg.safetensors` (134MB)
+- **Location**: `~/ComfyUI/models/loras/elena_zimage_v3_comfyorg.safetensors`
 
-```bash
-# Check training status
-ssh -p 27228 root@ssh3.vast.ai "grep -oP 'steps:.*avr_loss=[\d.]+' /workspace/training.log | tail -5"
+**Testing Results:**
 
-# Check if complete
-ssh -p 27228 root@ssh3.vast.ai "ls -la /workspace/output/elena_v3/"
+| Test | LoRA Weight | CFG | Identity |
+|------|-------------|-----|----------|
+| casual_selfie | 0.8 | 3.5 | ❌ Weak - generic face |
+| elena_strong (café) | 1.0 | 3.0 | ✅ Good - features match |
+| elena_beach | 1.0 | 3.0 | ✅ Excellent - consistent identity |
 
-# When done, download LoRA
-scp -P 27228 root@ssh3.vast.ai:/workspace/output/elena_v3/elena_zimage_v3_comfyorg_comfyui.safetensors .
+**Optimal Settings Found:**
 ```
+LoRA Weight: 1.0
+CFG: 3.0
+Steps: 30
+Resolution: 1024x1344 (3:4 portrait)
+Sampler: res_multistep
+Scheduler: simple
+```
+
+**Required Prompt Structure** (for strong identity):
+```
+elena, [scene context],
+light brown wavy hair with blonde highlights, full lips, high cheekbones, angular face,
+[clothing], gold chain/pendant necklace,
+[pose/expression],
+iPhone 16 Pro photo, natural skin, [background] bokeh,
+[mood], warm tones, slight depth of field
+```
+
+**Key Learning**: Must include Elena's physical characteristics explicitly in prompt for strong identity. The LoRA alone at low weights produces generic faces.
 
 ---
 
 ## Outcome
 
-_Fill when task is complete, then rename file to DONE-014-elena-lora-comfyorg-zimage.md_
+✅ **SUCCESS** - Elena LoRA v3 trained on official Comfy-Org Z-Image Full architecture works correctly.
+
+**Files created:**
+- `~/ComfyUI/models/loras/elena_zimage_v3_comfyorg.safetensors` (134MB)
+- `app/scripts/elena-lora-v3-test.mjs` (test script with optimal settings)
+
+**Test images:**
+- `elena_v3_casual_selfie.png` - weak identity (w0.8)
+- `elena_v3_strong.png` - good identity (w1.0, café scene)
+- `elena_v3_beach.png` - excellent identity (w1.0, beach scene)
 
 ---
 

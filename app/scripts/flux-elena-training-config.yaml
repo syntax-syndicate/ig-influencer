@@ -1,0 +1,60 @@
+# Elena FLUX LoRA Training Config for Chroma
+# Based on ai-toolkit/config/examples/train_lora_flux_24gb.yaml
+
+job: extension
+config:
+  name: "elena_flux_lora_v1"
+  process:
+    - type: sd_trainer
+      training_folder: "/output"
+      device: cuda:0
+      trigger_word: "elena"
+      network:
+        type: lora
+        linear: 32
+        linear_alpha: 16
+      save:
+        dtype: float16
+        save_every: 500
+        max_step_saves_to_keep: 3
+      datasets:
+        - folder_path: "/dataset/elena"
+          caption_ext: txt
+          caption_dropout_rate: 0.05
+          shuffle_tokens: false
+          cache_latents_to_disk: true
+          resolution: [1024]
+      train:
+        batch_size: 1
+        steps: 4000
+        gradient_accumulation_steps: 1
+        train_unet: true
+        train_text_encoder: false
+        content_or_style: balanced
+        gradient_checkpointing: true
+        noise_scheduler: flowmatch
+        optimizer: adamw8bit
+        lr: 1e-4
+        ema_config:
+          use_ema: true
+          ema_decay: 0.99
+        dtype: bf16
+      model:
+        # Using Comfy-Org's ungated FLUX model
+        name_or_path: "Comfy-Org/flux1-dev"
+        is_flux: true
+        quantize: true
+      sample:
+        sampler: flowmatch
+        sample_every: 500
+        width: 1024
+        height: 1024
+        prompts:
+          - "elena, a woman with bronde beach waves and hazel-green eyes, standing on Paris rooftop balcony, golden hour lighting, natural smile, iphone photo"
+          - "elena, close up portrait of a woman, tan skin, beauty mark on right cheek, soft natural lighting, looking at camera"
+          - "elena, a woman in black bikini, sitting by pool, tropical setting, golden hour, relaxed pose"
+        neg: ""
+        seed: 42
+        walk_seed: true
+        guidance_scale: 4
+        sample_steps: 20

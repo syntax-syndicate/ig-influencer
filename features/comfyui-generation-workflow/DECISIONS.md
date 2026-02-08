@@ -4,6 +4,115 @@ Chronological log of decisions made and why.
 
 ---
 
+## 2026-02-08: Optimal Inference — 30 Steps, CFG 1.0
+
+**Context**: Testing different step counts and CFG values for skin realism on ZiT NSFW v3.0 + Elena LoRA v2.
+
+**Tests**:
+| Steps | CFG | Skin Quality | Notes |
+|-------|-----|-------------|-------|
+| 8 | 0.0 | OK but smooth | Fast (~7s), decent but "AI look" |
+| 20 | 3.0 | Too smooth | More detail but skin still plastic |
+| **30** | **1.0** | **Excellent** | Natural pores, realistic texture, best results |
+
+**Decision**: Use **30 steps, CFG 1.0** for production quality
+
+**Reason**: CFG 1.0 gives just enough guidance without over-smoothing. 30 steps allows full detail refinement. CFG 3.0 was too strong (smooth skin), CFG 0 was too unguided (AI artifacts).
+
+**User feedback**: "i love it. this one is soo perfect" (couch scene at 30/1.0)
+
+**Status**: Confirmed — production settings
+
+---
+
+## 2026-02-08: Diffusers > ComfyUI for Z-Image NSFW Inference
+
+**Context**: Elena LoRA v2 trained on ZiT NSFW v3.0 checkpoint (CivitAI vID:2625526). All images from ComfyUI were pure noise/static — even without the LoRA.
+
+**Root Cause**: ComfyUI's `UNETLoader` cannot properly detect/schedule the CivitAI Z-Image NSFW checkpoint. The model loads and runs (progress bars complete) but the noise schedule/sigma values are wrong, producing random noise output. The file format IS valid (correct safetensors keys, correct sizes), but ComfyUI's model architecture auto-detection fails for this specific CivitAI variant.
+
+**Solution**: Use **diffusers `ZImagePipeline`** instead of ComfyUI. The CivitAI file (ComfyUI format, fused QKV) needs key conversion to diffusers format (split Q/K/V). Same conversion used during training by Ostris AI Toolkit.
+
+**Key conversion steps** (ComfyUI → diffusers):
+1. Strip `model.diffusion_model.` prefix
+2. Split fused `.qkv.weight` → `.to_q.weight`, `.to_k.weight`, `.to_v.weight` (chunk 3)
+3. Rename `.attention.out.` → `.attention.to_out.0.`
+4. Rename `.q_norm.` → `.norm_q.`, `.k_norm.` → `.norm_k.`
+5. Rename `final_layer.` → `all_final_layer.2-1.`, `x_embedder.` → `all_x_embedder.2-1.`
+
+**Decision**: Use diffusers for NSFW inference, abandon ComfyUI for this checkpoint
+
+**Status**: Confirmed working — 5 test images generated (3 SFW + 2 NSFW)
+
+---
+
+## 2026-02-08: Elena LoRA v2 Trained on NSFW Checkpoint
+
+**Context**: Elena LoRA v1 (trained on base Z-Image Turbo) couldn't do explicit NSFW. Solution: retrain Elena LoRA directly ON the ZiT NSFW v3.0 checkpoint.
+
+**Training Config (v2)**:
+| Param | Value |
+|---|---|
+| Base model | ZiT NSFW v3.0 (CivitAI vID:2625526, 12GB) |
+| Steps | 4500 (up from 4000) |
+| Rank | 32 (up from 16) |
+| Alpha | 16 (rank/2 ratio) |
+| LR | 1e-4 |
+| Trigger | `<elena>` |
+| Adapter | Ostris v2 de-distillation |
+| GPU | Vast.ai H100 SXM ($1.16/hr) |
+| Training time | ~2.5h |
+| Final LoRA | 162MB (vs 81MB for v1) |
+
+**Result**: Face consistency looks good. SFW images are Elena. NSFW testing in progress by user.
+
+**Files**: `elena_lora_tests/nsfw_v2_training/elena_zit_nsfw_v2.safetensors`
+
+**Status**: Testing in progress
+
+---
+
+## 2026-02-08: Z-Image Turbo Base Model = No Explicit NSFW
+
+**Context**: Elena LoRA v1 inference testing complete (36 images). Nudity works (topless, shower, bedroom nude) but explicit content (genitals visible, clothing partially removed) does NOT work — model generates glitches or ignores the prompt.
+
+**Problem**: Z-Image Turbo is a general-purpose model from Alibaba. Unlike BigLove XL (NSFW-specialized SDXL fine-tune), it was not trained on explicit sexual content. The Elena LoRA only teaches WHO Elena is, not HOW to generate explicit poses.
+
+**Options to investigate**:
+1. Find a community NSFW LoRA for Z-Image Turbo (CivitAI has several — Nobody_Joy Uncensored, TensorHub NSFW LoRA)
+2. Stack Elena LoRA + NSFW LoRA together
+3. Two-stage pipeline: Z-Image Turbo for base + inpaint with BigLove XL for explicit details
+4. Find a Z-Image Turbo NSFW fine-tune/merge (ZiT NSFW v4.0?)
+
+**Status**: Investigating — search for NSFW LoRA in progress
+
+---
+
+## 2026-02-08: Inference Testing Complete — 36 Images Generated
+
+**Context**: Elena LoRA v1 trained, needed to test actual image generation across diverse scenarios.
+
+**Setup**: Vast.ai RTX 4090 ($0.22/hr) + ComfyUI + Z-Image Turbo + Elena LoRA via SSH tunnel
+
+**Results**:
+| Category | Count | Result |
+|----------|-------|--------|
+| SFW (portrait, cafe, beach, gym, night) | 15 | All generated successfully |
+| Suggestive (lingerie, bedroom) | 6 | All generated successfully |
+| NSFW (topless, shower, nude) | 9 | All generated successfully |
+| Face consistency tests | 6 | All generated successfully |
+| **Explicit (genitals, clothing removed)** | 4 | **FAILED — model can't do it** |
+
+**Key Finding**: RTX 5090 (Blackwell sm_120) incompatible with PyTorch 2.4+cu124 — needs CUDA 12.8+. Had to switch to RTX 4090.
+
+**Inference Speed**: ~7s per image (8 steps), ~18s first image (model load)
+
+**Files**: `elena_lora_tests/zit_inference/` (36 PNG, ~1.3MB each)
+
+**Status**: Complete
+
+---
+
 ## 2026-02-06: Z-Image Turbo + Elena LoRA = 2026 Production Pipeline
 
 **Context**: After testing BigLove XL (SDXL = 2024 quality), FLUX (plastic skin), HiDream (no face tools), Chroma (NSFW glitches), and ACE++ (abandoned by Alibaba), needed a 2026-quality solution with face consistency + NSFW support.
@@ -31,7 +140,7 @@ Chronological log of decisions made and why.
 - Trained on Vast.ai H100 SXM in 2h45m (~$4.10)
 - Final LoRA: 81MB (`elena_zit_lora_v1.safetensors`)
 
-**Result**: Training complete. Inference testing pending. Looks very promising from training samples.
+**Result**: Training complete. Inference tested — SFW/NSFW nudity works, explicit content needs NSFW LoRA.
 
 ---
 

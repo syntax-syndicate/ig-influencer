@@ -110,8 +110,13 @@ node app/scripts/runpod-connect.mjs --status
 | **RealESRGAN_x4plus** | Better than UltraSharp for detail preservation |
 | **HiDream-I1 Uncensored** | NSFW works with `e-n-v-y/hidream-uncensored` (HuggingFace), skin 9/10 |
 | **Chroma1-HD SFW/suggestive** | FLUX-based, excellent natural/amateur look - CFG 3.0, dpmpp_sde, beta scheduler |
-| **Z-Image Turbo + Elena LoRA** | **2026 BEST**: Natural skin with pores/grain, ~90% face consistency, NSFW works. Trained with Ostris AI Toolkit + de-distillation adapter v2 |
+| **Z-Image Turbo + Elena LoRA** | **2026 BEST**: Natural skin with pores/grain, ~90% face consistency, NSFW nudity works. Trained with Ostris AI Toolkit + de-distillation adapter v2 |
 | **Vast.ai H100 SXM** | 2.8x faster than 4090 for LoRA training, $1.49/hr, reliable. 4000 steps in 2h45m |
+| **ZiT inference on RTX 4090** | ~7s/image (8 steps), 36 test images generated. ComfyUI + SSH tunnel via Vast.ai ($0.22/hr) |
+| **elena-single-gen.mjs** | Quick single image generation script: `COMFYUI_URL=... node app/scripts/elena-single-gen.mjs "prompt" output.png` |
+| **Elena LoRA v2 (NSFW)** | Trained ON ZiT NSFW v3.0 checkpoint, rank 32, 4500 steps. Face consistency confirmed. 162MB |
+| **Diffusers ZImagePipeline** | Works for NSFW checkpoint inference where ComfyUI fails. Convert keys in memory, load from Tongyi-MAI, swap transformer |
+| **CivitAI→diffusers conversion** | Strip prefix, split fused QKV (chunk 3), rename attention/norm/embedder keys. 521 keys, perfect match |
 
 ## What Doesn't Work ❌
 
@@ -138,6 +143,7 @@ node app/scripts/runpod-connect.mjs --status
 | **Chroma1-HD explicit NSFW** | Glitches, body deformations, hands turn into blobs on explicit poses |
 | **ACE++ (Alibaba)** | Project abandoned by Alibaba, pale skin, no community support |
 | **Comfy-Org single files for training** | Fused QKV format incompatible with diffusers split Q/K/V — must use Tongyi-MAI sharded files |
+| **ComfyUI + CivitAI ZiT NSFW checkpoint** | UNETLoader produces pure noise — model detection/scheduling broken for this CivitAI variant. Use diffusers instead |
 
 ## Open Questions ❓
 
