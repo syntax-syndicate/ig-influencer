@@ -135,6 +135,20 @@ CREATE TABLE content_queue (
 - **Problems**: None
 - **Solutions**: N/A
 
+### 2026-02-08 — First Live Pipeline Test + Auto-Refresh
+- **Working on**: End-to-end live test + token persistence fix
+- **Actions**:
+  - Generated 5 X images via `elena-generate-batch.mjs` (SSH inline script failed due to connection drop during model load → fixed by SCP'ing script to pod + running with ServerAliveInterval)
+  - All 5 approved → ran `elena-prepare-posts.mjs` → Cloudinary + captions + Supabase queue
+  - Posted 2 tweets live via `x-post-from-queue.mjs` (3 remaining in queue for GitHub Actions)
+  - Added OAuth2 auto-refresh to `x-post-from-queue.mjs`: on 401 → refresh with client_id/secret → save to Supabase → retry
+  - Created `app_config` table in Supabase for persistent token storage across GH Actions runs
+  - Added `X_CLIENT_ID` + `X_CLIENT_SECRET` GitHub secrets
+  - Updated `x-posting.yml` workflow with new env vars
+- **Result**: Full pipeline tested live, 2 tweets posted, auto-refresh working
+- **Problems**: SSH inline heredoc too large → connection drops during model load; X token expired (401)
+- **Solutions**: SCP script as file + SSH with keep-alive; auto-refresh with Supabase persistence
+
 ### 2026-02-08
 - Task created
 - Pipeline architecture discussed and agreed:
@@ -157,6 +171,8 @@ End-to-end Elena content pipeline built and verified:
 - **Post**: `x-post-from-queue.mjs` — GitHub Actions cron (4x/day) picks from queue, posts to X, marks as posted
 
 All scripts dry-run tested. Supabase `content_queue` table created and confirmed working.
+Pipeline tested live: 5 images generated, 2 posted to X, 3 in queue for GitHub Actions auto-posting.
+Auto-refresh added: tokens persist in Supabase `app_config`, auto-refresh on 401 with retry.
 
 ---
 

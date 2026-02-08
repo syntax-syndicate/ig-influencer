@@ -2,7 +2,7 @@
 
 > Distribution channel for @ElenaVisco46970 — traffic source to Fanvue
 
-**Last updated**: 31 January 2026
+**Last updated**: 8 February 2026
 
 ---
 
@@ -119,6 +119,7 @@ X teasers (3-4/day) → Profile → Bio link → Fanvue → Venice AI chat → P
 - **33 Cloudinary images ready to post** (with captions)
 - **Elena Content Pipeline** (generate → curate → prepare → auto-post)
 - **GitHub Actions auto-posting** (4x/day from Supabase queue)
+- **OAuth2 auto-refresh** (tokens persist in Supabase, auto-refresh on 401)
 
 ## What Doesn't Work ❌
 
